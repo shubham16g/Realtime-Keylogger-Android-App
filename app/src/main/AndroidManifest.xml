@@ -10,9 +10,9 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.RealtimeKeylogger">
+        android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name="com.shubhamgupta16.realtimekeylogger.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,7 +22,7 @@
         </activity>
 
         <service
-            android:name=".service.ASEService"
+            android:name="com.shubhamgupta16.realtimekeylogger.service.StrokeService"
             android:enabled="true"
             android:exported="true"
             android:label="@string/app_name"
