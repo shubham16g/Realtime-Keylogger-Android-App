@@ -91,7 +91,6 @@ class StrokeService : AccessibilityService() {
             val eventText = event.text.joinToString { it }.ifBlank { null }
             val hashMap = hashMapOf(
                 "text" to eventText.encode(),
-                "notification" to notifyMap,
                 "desc" to event.contentDescription,
                 "event" to event.eventType
             )
